@@ -1,0 +1,199 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Liiga Stats</title>
+    <meta name="description" content="Stats from Finnish elite hockey league" />
+    <link
+      rel="shortcut icon"
+      type="image/png"
+      href="{% static 'img/liiga.png' %}"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css"
+      integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+      crossorigin="anonymous"
+    >
+  </head>
+  <body>
+    {% include "games.html" %}
+    {% include "topbar.html" %}
+
+    <script>
+      let selectedTeam = ""
+      let sortType = "points"
+    
+      const getGames = async (teamName) => {
+        let url = "{% url 'fetchGames' %}"
+        if (teamName) {
+          url += "?team=" + teamName
+        }
+    
+        const result = await fetch(url)
+        const data = await result.json()
+        //console.log(data)
+    
+        let htmlData = ""
+        const currentDate = new Date() 
+        let previousDate = currentDate
+        let isActiveSet = false
+        data.data.forEach(game => {
+          const startDate = new Date(game["start"])
+          if (previousDate.getDate() != startDate.getDate() || previousDate.getMonth() != startDate.getMonth()) {
+            monthString = startDate.toLocaleDateString("fi-FI", { month: "short" })
+    
+            let nextGamesId = ""
+            if (!isActiveSet && (startDate.getDate() >= currentDate.getDate() && startDate.getMonth() == currentDate.getMonth())) {
+              nextGamesId = ' id="next_games"'
+              isActiveSet = true
+            }
+    
+            htmlData +=
+            `<div class="datecolumn"${nextGamesId}>
+              <div>
+                ${monthString}
+              </div>
+              <div>
+                ${startDate.getDate()}
+              </div>
+            </div>`
+            previousDate = startDate
+          }
+          
+          // Get game outcome
+          let outcome = ""
+          if (game["finishedType"] == "ENDED_DURING_REGULAR_GAME_TIME") {
+            outcome = "Final"
+          } else if (game["finishedType"] == "ENDED_DURING_EXTENDED_GAME_TIME") {
+            outcome = "Overtime"
+          } else if (game["finishedType"] == "ENDED_DURING_WINNING_SHOT_COMPETITION") {
+            outcome = "Shootout"
+          } else {
+            // Active or not started
+            timestamp = startDate.toLocaleTimeString("fi-FI", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Helsinki" })
+            outcome = `${timestamp} GMT+2`
+          }
+    
+          const gameEnded = game["started"] && game["ended"]
+    
+          let homeOutcome = "gamestats"
+          let awayOutcome = "gamestats"
+          if (gameEnded) {
+            if (game["homeTeam"]["goals"] > game["awayTeam"]["goals"]) {
+              awayOutcome += " loser"
+            } else {
+              homeOutcome += " loser"
+            }
+          }
+    
+          // Team logos
+          const homeLogoFile = "{% static 'img/' %}" + getTeamNameForImage(game["homeTeam"]["teamName"]) + ".png"
+          const awayLogoFile = "{% static 'img/' %}" + getTeamNameForImage(game["awayTeam"]["teamName"]) + ".png"
+          
+          htmlData +=
+          `<div class="gamedata">
+            <div class="outcome">
+              ${outcome}
+            </div>
+            <div class="${homeOutcome}">
+              <div class="teamLogo">
+                <img src="${homeLogoFile}">
+              </div>
+              <div class="initialMargin">
+                ${game["homeTeam"]["teamName"]}
+              </div>
+              <div class="goals">
+                ${gameEnded ? game["homeTeam"]["goals"] : ""}
+              </div>
+            </div>
+            <div class="${awayOutcome}">
+              <div class="teamLogo">
+                <img src="${awayLogoFile}">
+              </div>
+              <div class="initialMargin">
+                ${game["awayTeam"]["teamName"]}
+              </div>
+              <div class="goals">
+                ${gameEnded ? game["awayTeam"]["goals"] : ""}
+              </div>
+            </div>
+          </div>`
+        });
+    
+        document.getElementById("games_row").innerHTML = htmlData
+        document.getElementById("next_games").scrollIntoView({ block: "start", inline: "start" })
+      }
+    
+      const getPlayers = async (sort_by, teamName) => {
+        let url = "{% url 'fetchPlayers' %}"
+        if (teamName) {
+          url += "?team=" + teamName
+        }
+        if (sort_by) {
+          url += !teamName ? "?" : "&"
+          url += "sort=" + sort_by 
+        }
+
+        const result = await fetch(url)
+        const data = await result.json()
+        //console.log(data)
+    
+        const table = document.getElementById("playersTable")
+        if (table.rows.length > 0) {
+          table.innerHTML = ""
+        }
+    
+        for (let i = 0; i < data.data.length; ++i) {
+          const plr = data.data[i]
+          const row = table.insertRow()
+          const standing = row.insertCell(0)
+          standing.innerHTML = i + 1
+          const name = row.insertCell(1)
+          name.innerHTML = plr["name"]
+          const team = row.insertCell(2)
+          team.innerHTML = plr["team"]
+          const games = row.insertCell(3)
+          games.innerHTML = plr["games_played"]
+          const goals = row.insertCell(4)
+          goals.innerHTML = plr["goals"]
+          if (sort_by == "goals") {
+            goals.classList.add("sortedColumn")
+          }
+          const assists = row.insertCell(5)
+          assists.innerHTML = plr["assists"]
+          if (sort_by == "assists") {
+            assists.classList.add("sortedColumn")
+          }
+          const points = row.insertCell(6)
+          points.innerHTML = plr["points"]
+          if (sort_by == "points") {
+            points.classList.add("sortedColumn")
+          }
+          const ppg = row.insertCell(7)
+          ppg.innerHTML = plr["ppg"]
+          const penalties = row.insertCell(8)
+          penalties.innerHTML = plr["penalty_minutes"]
+          const plusminus = row.insertCell(9)
+          plusminus.innerHTML = plr["plus_minus"]
+        }
+      }
+    
+      // Load games on page render
+      getGames()
+    
+      // Filter games and player stats by team
+      document.getElementById("dropdown_team").addEventListener("change", (e) => {
+        selectedTeam = e.target.value
+        getGames(selectedTeam)
+        getPlayers(sortType, selectedTeam)
+      })
+    </script>
+
+    <main>{% block content %} {% endblock %}</main>
+  </body>
+</html>

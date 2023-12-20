@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+  .main_content {
+    margin-top: 50px;
+  }
+
+  thead {
+    background-color: #ca3136;
+    color: white;
+  }
+
+  thead th {
+    text-align: center;
+  }
+
+  thead .sortableField {
+    cursor: pointer;
+  }
+
+  tbody .sortedColumn {
+    font-weight: bold;
+    background-color: rgba(0,0,0,0.05);
+  }
+
+  tbody tr:nth-child(odd) {
+    background-color: #ecf1f3;
+  }
+
+  thead tr th:nth-child(1),
+  tbody tr td:nth-child(1) {
+    width: 20px;
+    text-align: right;
+  }
+
+  .standingsTable thead tr th:nth-child(2),
+  .standingsTable tbody tr td:nth-child(2) {
+    width: 5vw;
+    padding: 0 5px;
+    text-align: left;
+  }
+
+  tbody td {
+    text-align: center;
+  }
+
+  .standingsTable, .playersTable {
+    width: 100%;
+    margin: 0 auto;
+    border: 1px solid #EEEEEE;
+  }
+
+  .playersTable thead tr th:nth-child(2),
+  .playersTable tbody tr td:nth-child(2) {
+    width: 13vw;
+    min-width: 110px;
+    max-width: 170px;
+    padding: 0 5px;
+    text-align: left;
+  }
+
+  .playersTable > thead tr th:nth-child(3),
+  .playersTable > tbody tr td:nth-child(3) {
+    width: 5vw;
+    text-align: left;
+  }
+</style>
+<section>
+  <div class="container main_content">
+    <div class="row">
+      <div class="col-xl-6">
+        <small>
+          Tip: you can sort player stats by goals (M), assists (A) or points (P)
+        </small>
+      </div>
+      <div class="col-xl-6">
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xl-6">
+        <table class="playersTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Pelaaja</th>
+              <th>Joukkue</th>
+              <th title="Ottelut">O</th>
+              <th title="Maalit" class="sortableField" id="sortByGoals">M</th>
+              <th title="Syötöt" class="sortableField" id="sortByAssists">S</th>
+              <th title="Pisteet" class="sortableField" id="sortByPoints">P</th>
+              <th title="Pisteet per ottelu">PPG</th>
+              <th title="Rangaistusminuutit">R</th>
+              <th title="Plusmiinus tilasto">+/-</th>
+            </tr>
+          </thead>
+          <tbody class="playersBody" id="playersTable">
+          </tbody>
+        </table>
+      </div>
+      <div class="col-xl-6">
+        <table class="standingsTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Joukkue</th>
+              <th title="Ottelut">O</th>
+              <th title="Voitot">V</th>
+              <th title="Tasapelit">T</th>
+              <th title="Häviöt">H</th>
+              <th title="Lisäpisteet">LP</th>
+              <th title="Tehdyt maalit">TM</th>
+              <th title="Päästetyt maalit">PM</th>
+              <th title="Pisteet">P</th>
+              <th title="Pisteet per ottelu">PPG</th>
+              <th title="Ylivoimaprosentti">YV%</th>
+              <th title="Alivoimaprosentti">AV%</th>
+            </tr>
+          </thead>
+          <tbody class="standingsBody" id="standingsTable">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Get players on page load
+  getPlayers(sortType, selectedTeam)
+
+  document.getElementById("sortByPoints").addEventListener("click", (e) => {
+    sortType = "points"
+    getPlayers(sortType, selectedTeam)
+  })
+  document.getElementById("sortByAssists").addEventListener("click", (e) => {
+    sortType = "assists"
+    getPlayers(sortType, selectedTeam)
+  })
+  document.getElementById("sortByGoals").addEventListener("click", (e) => {
+    sortType = "goals"
+    getPlayers(sortType, selectedTeam)
+  })
+
+  const getTeams = async () => {
+    const result = await fetch("{% url 'fetchStandings' %}")
+    const data = await result.json()
+    //console.log(data)
+
+    const table = document.getElementById("standingsTable")
+    if (table.rows.length > 0) {
+      table.innerHTML = ""
+    }
+
+    const getProperTeamName = (raw_name) => {
+      if (raw_name == "hifk") return "HIFK";
+      if (raw_name == "hpk") return "HPK";
+      if (raw_name == "ilves") return "Ilves";
+      if (raw_name == "jukurit") return "Jukurit";
+      if (raw_name == "jyp") return "Jyp";
+      if (raw_name == "kalpa") return "KalPa";
+      if (raw_name == "karpat") return "Kärpät";
+      if (raw_name == "kookoo") return "KooKoo";
+      if (raw_name == "lukko") return "Lukko";
+      if (raw_name == "pelicans") return "Pelicans";
+      if (raw_name == "saipa") return "SaiPa";
+      if (raw_name == "sport") return "Sport";
+      if (raw_name == "tappara") return "Tappara";
+      if (raw_name == "tps") return "TPS";
+      if (raw_name == "assat") return "Ässät";
+      return "unknown";
+    }
+
+    for (let i = 0; i < data.data.length; ++i) {
+      const team = data.data[i]
+      const row = table.insertRow()
+      const standing = row.insertCell(0)
+      standing.innerHTML = i + 1
+      const name = row.insertCell(1)
+      name.innerHTML = getProperTeamName(team["team"])
+      const games = row.insertCell(2)
+      games.innerHTML = team["games"]
+      const wins = row.insertCell(3)
+      wins.innerHTML = team["games_won"]
+      const ties = row.insertCell(4)
+      ties.innerHTML = team["games_tied"]
+      const losses = row.insertCell(5)
+      losses.innerHTML = team["games_lost"]
+      const otPointsWon = row.insertCell(6)
+      otPointsWon.innerHTML = team["ot_ps_won"]
+      const goalsFor = row.insertCell(7)
+      goalsFor.innerHTML = team["goals_for"]
+      const goalsAgainst = row.insertCell(8)
+      goalsAgainst.innerHTML = team["goals_against"]
+      const points = row.insertCell(9)
+      points.innerHTML = team["points"]
+      points.classList.add("sortedColumn")
+      const ppg = row.insertCell(10)
+      ppg.innerHTML = team["points_per_game"]
+      const powerplay = row.insertCell(11)
+      powerplay.innerHTML = team["powerplay_percentage"]
+      const penaltykill = row.insertCell(12)
+      penaltykill.innerHTML = team["penaltykill_percentage"]
+    };
+  }
+
+  // Load teams on page render
+  getTeams()
+</script>
+{% endblock %}

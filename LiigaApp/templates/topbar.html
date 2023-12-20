@@ -1,0 +1,84 @@
+{% load static %}
+<style>
+  .topBar {
+    width: 100%;
+    height: 80px;
+    padding: 0 10px;
+    background-color: black;
+  }
+
+  .topBar > .container {
+    height: 100%;
+  }
+
+  .topBar > .container > .row {
+    height: 100%;
+    align-items: center;
+  }
+
+  .logo {
+    display: flex;
+    width: 70px;
+    height: auto;
+    justify-content: center;
+    align-items: center;
+    align-self: center;
+    justify-self: center;
+    margin-left: auto;
+  }
+
+  .logo > img {
+    width: 100%;
+    height: auto;
+  }
+
+  .dropdown_container {
+    display: flex;
+    width: 110px;
+    flex-direction: column;
+    margin-left: auto;
+    color: #EEEEEE;
+    font-size: small;
+    gap: 5px;
+  }
+
+  .dropdown_container > .dropdown_label {
+    font-size: smaller;
+  }
+</style>
+<header>
+  <div class="topBar">
+    <div class="container">
+      <div class="row">
+        <div class="col">
+          <div class="logo">
+            <img src="{% static 'img/liiga.png' %}">
+          </div>
+        </div>
+        <div class="col">
+          <div class="dropdown_container">
+            <div class="dropdown_label">Filter by team</div>
+            <select name="dropdown_team" id="dropdown_team">
+              <option value="" selected>Show all</option>
+              <option value="hifk">HIFK</option>
+              <option value="hpk">HPK</option>
+              <option value="ilves">Ilves</option>
+              <option value="jukurit">Jukurit</option>
+              <option value="jyp">Jyp</option>
+              <option value="kalpa">KalPa</option>
+              <option value="karpat">Kärpät</option>
+              <option value="kookoo">KooKoo</option>
+              <option value="lukko">Lukko</option>
+              <option value="pelicans">Pelicans</option>
+              <option value="saipa">SaiPa</option>
+              <option value="sport">Sport</option>
+              <option value="tappara">Tappara</option>
+              <option value="tps">TPS</option>
+              <option value="assat">Ässät</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>

@@ -1,0 +1,91 @@
+{% load static %}
+<style>
+  .container-fluid > .row {
+    height: 120px;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .datecolumn {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 10px;
+    border-right: 1px solid #EEEEEE;
+    background-color: #EEEEEE;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+  }
+
+  .gamedata {
+    min-width: 180px;
+    display: inline-block;
+    padding: 10px;
+    float: none;
+    border-right: 1px solid #EEEEEE;
+  }
+
+  .gamedata > .outcome {
+    display: inline-block;
+    background-color: #EEEEEE;
+    padding: 0px 8px;
+    border-radius: 3px;
+    font-size: x-small;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .gamedata > .loser {
+    color: #6F6F6F;
+  }
+
+  .gamedata > .gamestats {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    font-weight: 800;
+    align-items: center;
+  }
+
+  .gamestats > .teamLogo {
+    display: flex;
+    width: 30px;
+    height: 30px;
+    justify-content: center;
+    align-items: center;
+    align-self: center;
+  }
+
+  .teamLogo > img {
+    width: 100%;
+    height: auto;
+  }
+
+  .gamestats > .initialMargin {
+    padding-left: 5px;
+  }
+
+  .gamestats > .goals {
+    margin-left: auto;
+  }
+
+</style>
+<header>
+  <div class="container-fluid">
+    <div class="row flex-row flex-nowrap" id="games_row">
+    </div>
+  </div>
+</header>
+
+<script>
+  const getTeamNameForImage = (raw_name) => {
+    if (raw_name === "Kärpät") {
+      return "karpat"
+    }
+    if (raw_name === "Ässät") {
+      return "assat"
+    }
+    return raw_name.toLowerCase()
+  }
+</script>
